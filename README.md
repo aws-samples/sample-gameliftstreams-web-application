@@ -32,7 +32,7 @@ You can choose to set up either or both of the following components, based on yo
 
 - Run `install_server.bat`
 
-**Linux/OSX:** Open Terminal and enter these commands:
+**Linux/MacOS:** Open Terminal and enter these commands:
 
 ```
 chmod +x install_server.sh
@@ -44,6 +44,8 @@ If you have any issues running the install script, try:
 ```
 dos2unix install_server.sh
 ```
+
+After running the install script, the local web server will start running on Example(http://localhost:5000). You can now load this URL in your web browser to access the sample web application.
 
 #### URL sharing
 
