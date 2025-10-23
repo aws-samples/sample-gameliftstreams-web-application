@@ -515,7 +515,7 @@ app.post('/api/CreateStreamSession', function (req, res) {
         ConnectionTimeoutSeconds: config.STREAM_CONNECTION_TIMEOUT_SECONDS,
         SessionLengthSeconds: 3600, // limit session length to 1 hour, can be configured up to 24 hours
         ApplicationIdentifier: req.body.ApplicationIdentifier,
-        Locations: req.body.Locations,
+        Locations: req.body.locations,
     };
 
     gameliftstreams.startStreamSession(requestData, (err, data) => {
@@ -1037,6 +1037,3 @@ app.use((req, res, next) => {
   res.setHeader('X-API-Version', config.API_VERSION);
   next();
 });
-
-
-
