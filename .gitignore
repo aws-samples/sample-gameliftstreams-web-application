@@ -1,2 +1,7 @@
 node_modules
 cdk.out
+.DS_Store
+.idea/
+server/public/gameliftstreams-*.js
+server/public/gameliftstreams-*.mjs
+server/public/gameliftstreams-*.d.ts

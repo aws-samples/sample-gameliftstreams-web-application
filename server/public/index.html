@@ -53,7 +53,7 @@
 
     <!-- Import GameLiftStreams universal library as window.gameliftstreams Can also be imported
       -- as a TypeScript, CommonJS, or AMD module for use with browserify or webpack. -->
-    <script type="text/javascript" src="gameliftstreams-1.0.0.js"></script>
+    <script type="text/javascript" src="gameliftstreams-1.1.0.js"></script>
     <script>
         console.log('GameLift Streams SDK loaded:', !!window.gameliftstreams);
         console.log('GameLiftStreams class available:', !!window.gameliftstreams.GameLiftStreams);
@@ -93,7 +93,8 @@
     <script type="text/javascript">
         // Set Stream Start Time
         window.streamStartTime = Date.now();
-        // Set this to true for local development, false for deployed/Lambda
+        // Set this to truy
+        // e for local development, false for deployed/Lambda
         var IS_LOCAL = true;
         
         
@@ -167,6 +168,34 @@
                 console.log(`doPost response data: ${JSON.stringify(responseData)}`);
                 return responseData;
             }
+        }
+ 
+        function streamConnectionStateCallback(state) {
+            console.log('Connection state: ' + state);
+            if (state === 'disconnected') {
+                appDisconnect();
+            }
+        }
+
+        function streamChannelErrorCallback(error) {
+            console.log('WebRTC internal connection error: ' + error);
+            appDisconnect();
+        }
+
+        function streamServerDisconnectCallback(reasoncode) {
+            console.log('Server disconnected with reason: ' + reasoncode);
+            if (reasoncode === 'terminated') {
+                // Stream session has ended, disable all reconnection UI
+                deleteAllQueryParams();
+                appShowReconnectLinks(false);
+            }
+            // The connection state will transition to 'disconnected' within 5 seconds,
+            // but there is no reason to wait. The client can disconnect immediately.
+            appDisconnect();
+        }
+
+        function streamApplicationMessageCallback(message) {
+            console.log('Received ' + message.length + ' bytes of message from Application');
         }
 
         function appInit() {
@@ -267,12 +296,12 @@
             //
 
             // For convenience, restore saved stream group id, user id, and advanced settings from cookies
-            restoreFromCookieIfSet('setupApplicationId', 'savedApplicationId');
-            restoreFromCookieIfSet('setupStreamGroupId', 'savedStreamGroupId');
-            restoreFromCookieIfSet('setupLocations', 'savedLocations');
-            restoreFromCookieIfSet('setupUserId', 'savedUserId');
-            restoreFromCookieIfSet('setupArgs', 'savedArgs');
-            restoreFromCookieIfSet('setupEnv', 'savedEnv');
+            restoreFromCookieIfSet('savedApplicationId', 'setupApplicationId');
+            restoreFromCookieIfSet('savedStreamGroupId', 'setupStreamGroupId');
+            restoreFromCookieIfSet('savedLocations', 'setupLocations');
+            restoreFromCookieIfSet('savedUserId', 'setupUserId');
+            restoreFromCookieIfSet('savedArgs', 'setupArgs');
+            restoreFromCookieIfSet('savedEnv', 'setupEnv');
 
             // Reconnect to stored session in query params, if set, else go to setup screen
             if (getQueryParams().get('token')) {
@@ -303,31 +332,27 @@
             // Check if URL contains the necessary parameters to start streaming
             const urlParams = new URLSearchParams(window.location.search);
 
-            // Use the URL parameters, if available
-            const userId = sanitizeInput(urlParams.get('userId')) || 'Player1';
-            const streamGroupId = validateStreamIds(urlParams.get('streamGroupId')) || '';
-            const applicationId = validateStreamIds(urlParams.get('applicationId')) || '';
+            // Use the URL parameters, if available, otherwise keep cookie-restored values
+            const userId = sanitizeInput(urlParams.get('userId'));
+            const streamGroupId = validateStreamIds(urlParams.get('streamGroupId'));
+            const applicationId = validateStreamIds(urlParams.get('applicationId'));
             const location = sanitizeInput(urlParams.get('location'));
 
-            // Set the form values
-            document.getElementById('setupUserId').value = userId;
-            document.getElementById('setupStreamGroupId').value = streamGroupId;
-            document.getElementById('setupApplicationId').value = applicationId;
+            // Set the form values only if URL parameters exist
+            if (userId) document.getElementById('setupUserId').value = userId;
+            if (streamGroupId) document.getElementById('setupStreamGroupId').value = streamGroupId;
+            if (applicationId) document.getElementById('setupApplicationId').value = applicationId;
 
             // Handle locations setup
             if (location) {
                 // If location is in URL, set it in both display and hidden inputs
                 document.getElementById('setupLocationsDisplay').value = location;
                 document.getElementById('setupLocations').value = JSON.stringify([location]);
-            } else {
-                // Set default value if no location in URL
+            } else if (!document.getElementById('setupLocations').value) {
+                // Set default value only if no location in URL and no cookie value
                 document.getElementById('setupLocationsDisplay').value = 'us-west-2';
                 document.getElementById('setupLocations').value = '["us-west-2"]';
             }
-
-            // Then in your streaming initialization, use your original logic:
-            const locations = document.getElementById('setupLocations').value;
-            Locations: locations !== '' ? JSON.parse(document.getElementById('setupLocations').value) : undefined
 
             // Hide the setup container if any of the URL parameters are present
             const setupContainer = document.getElementById('setupContainer');

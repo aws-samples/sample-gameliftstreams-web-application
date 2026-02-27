@@ -1,6 +1,6 @@
 ## Sample Web Application for Amazon GameLift Streams
 
-An easy-to-deploy web application example for Amazon GameLift Streams that enables browser-based game streaming with URL sharing capabilities.
+An easy-to-deploy web application example for Amazon GameLift Streams that enables browser-based game streaming with sharable URLs.
 
 **⚠️ IMPORTANT NOTICE**
 This code is example code for testing and evaluation purposes only and should not be used in a production capacity. For guidance on creating production client applications, including proper testing and evaluation procedures, refer to the section on the [web client](https://docs.aws.amazon.com/gameliftstreams/latest/developerguide/sdk.html) in the _Amazon GameLift Streams Developer Guide_.
@@ -11,16 +11,16 @@ Make sure you have the following prerequisites before continuing to the next ste
 
 1. An AWS account with proper credentials for programmatic access. For detailed instructions, refer to [Setting up Amazon GameLift Streams](https://docs.aws.amazon.com/gameliftstreams/latest/developerguide/setting-up.html) in the _Amazon GameLift Streams Developer Guide_.
 2. An Amazon GameLift Streams-supported web browser. Refer to [Supported browsers and input](https://docs.aws.amazon.com/gameliftstreams/latest/developerguide/sdk-browsers-input.html) in the _Amazon GameLift Streams Developer Guide_.
-3. Node.js 16 or newer. Download this from the [Node.js downloads](https://nodejs.org/en/download) page.
+3. Node.js 22 or newer. Download this from the [Node.js downloads](https://nodejs.org/en/download) page.
 
 ### Step 2: Download the Web SDK dependencies
 
-Before using either component, you will need to obtain the latest Amazon GameLift Streams Web SDK and drop it into the project files. 
+Before using either component, you will need to obtain the latest Amazon GameLift Streams Web SDK and add it tp the project files. 
 
 1. Clone this repository to your computer.
-2. Download the latest [Web SDK bundle](https://gameliftstreams-public-website-assets.s3.us-west-2.amazonaws.com/AmazonGameLiftStreamsWebSDK-v1.0.0.zip) from the Amazon GameLift Streams.
+2. Download the latest [Web SDK bundle](https://gameliftstreams-public-website-assets.s3.us-west-2.amazonaws.com/AmazonGameLiftStreamsWebSDK-v1.1.0.zip) from Amazon GameLift Streams.
 3. Unzip the bundle.
-4. Copy the `gameliftstreams-x.x.x.mjs` and `gameliftstreams-x.x.x.js` files into the `server/public` folder of this project (next to the other source files like `index.html`)
+4. Copy the `gameliftstreams-x.x.x.mjs`,  `gameliftstreams-x.x.x.js` and `gameliftstreams-x.x.x.d.ts` files into the `server/public` folder of this project (next to the other source files like `index.html`)
 
 ### Step 3: Setup components
 
@@ -49,7 +49,7 @@ After running the install script, the local web server will start running on Exa
 
 #### URL sharing
 
-To deploy this AWS Cloud Development Kit (CDK) stack, you'll need some additional toolsthe following permissions/configurations in your AWS account:
+To deploy this AWS Cloud Development Kit (CDK) stack, you'll need the following permissions/configurations in your AWS account:
 
 1. **Base AWS Identity and Access Management (IAM) Permissions**:
    
@@ -66,7 +66,7 @@ To deploy this AWS Cloud Development Kit (CDK) stack, you'll need some additiona
 3. **AWS CLI Configuration**: Ensure your AWS CLI is configured with appropriate credentials. 
    Please see information on how the AWS CLI is configured here: https://docs.aws.amazon.com/cli/v1/userguide/cli-chap-configure.html
 
-4. **Deployment Environment Variables**: When deploying the AWS CDK stack, you can use the standard `CDK_DEFAULT_REGION` environment variable to specify the AWS region to use. This is considered a better practice than hardcoding the region in the code, as it makes the deployment more flexible and reusable. 
+4. **Deployment Environment Variables**: When deploying the AWS CDK stack, you can use the standard `CDK_DEFAULT_REGION` environment variable to specify the AWS region. This is preferred to hardcoding the region in the code, as it makes deployments more flexible and reusable. 
    For example:
    **Windows**:
    
@@ -80,7 +80,7 @@ To deploy this AWS Cloud Development Kit (CDK) stack, you'll need some additiona
 
 1. On the Amazon GameLift Streams console Dashboard, select Stream groups.
 
-2. Select the stream group you wish to stream from and locate its 'Stream group ID'. You will need it to run the deployment script. Make sure the application(s) you wish to stream are associated with it.
+2. Select the stream group you wish to stream from and locate its 'Stream group ID'. You will need the ID to run the deployment script. Make sure the application(s) you wish to stream are associated with it.
 
 3. Deploy the AWS CDK stack.
 
@@ -145,11 +145,9 @@ Typical use should be within AWS CloudFormation free tier, see:
 
 ## Dependencies
 
-**AWS SDK Related:**
+**AWS SDK Packages:**
 
-- @aws-sdk/client-bedrock-runtime
-- @aws-sdk/client-cloudwatch
-- aws-sdk
+- @aws-sdk/client-gameliftstreams
 
 **Third-party Packages:**
 
@@ -185,4 +183,4 @@ See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more inform
 
 ## License
 
-This library is licensed under the MIT-0 License. Please See the LICENSE file.
+This library is licensed under the MIT-0 License. Please see the [LICENSE](./LICENSE) file for details.
