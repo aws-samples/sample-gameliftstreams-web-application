@@ -111,10 +111,20 @@ fi
 
 # Verify CDK version
 echo "Verifying CDK version..."
-if ! npx cdk --version; then
-    echo "Failed to verify CDK installation"
-    read -p "Press Enter to continue..."
-    exit 1
+cdk_found=0
+if npm list --depth=0 "$PACKAGE_NAME" >/dev/null 2>&1; then
+  echo "Package $PACKAGE_NAME is installed locally."
+  $cdk_found=1
+else
+  echo "Package $PACKAGE_NAME is NOT installed locally."
+  if npm list --location=global --depth=0 "$PACKAGE_NAME" >/dev/null 2>&1; then
+    echo "Package $PACKAGE_NAME is installed globally."
+    $cdk_found=1
+  fi
+fi
+if !$cdk_found; then
+  echo "CDK is not installed. Please install"
+  exit 1
 fi
 
 
@@ -139,14 +149,14 @@ fi
 echo "Starting CDK deployment process..."
 
 echo "Bootstrapping CDK stack..."
-if ! npx cdk bootstrap; then
+if ! cdk bootstrap; then
     echo "CDK bootstrap failed"
     read -p "Press Enter to continue..."
     exit 1
 fi
 
 echo "Synthesizing CDK stack..."
-if ! npx cdk synth; then
+if ! cdk synth; then
     echo "CDK synthesis failed"
     read -p "Press Enter to continue..."
     exit 1
@@ -163,7 +173,7 @@ fi
 
 # Deploy
 echo "Deploying CDK stack..."
-if ! npx cdk deploy --require-approval never; then
+if ! cdk deploy --require-approval never; then
     echo "CDK deployment failed"
     read -p "Press Enter to continue..."
     exit 1

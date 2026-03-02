@@ -3,7 +3,7 @@
   "description": "An easy-to-deploy web application example for GameLift Streaming that enables browser-based game streaming with URL sharing capabilities",
   "version": "0.1.0",
   "bin": {
-    "cdk": "bin/GLSInfrasstructureStack.js"
+    "cdk": "bin/cdk.js"
   },
   "scripts": {
     "start": "node local-server.js",
@@ -14,16 +14,15 @@
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
-    "@types/node": "22.5.4",
-    "aws-cdk": "2.158.0",
+    "@types/node": "^22.19.13",
+    "aws-cdk": "^2.1108.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.2"
+    "typescript": "^5.9.3"
   },
   "dependencies": {
-    "aws-cdk-lib": "2.186.0",
-    "aws-sdk": "^2.1691.0",
+    "aws-cdk-lib": "^2.240.0",
     "constructs": "^10.0.0",
     "cors": "^2.8.5",
     "express": "^4.21.0",

@@ -21,8 +21,7 @@
  * @fileoverview Main server application for GameLift Stream Web Sharing Demo
  * @description Handles WebRTC streaming, session management, and API endpoints
  * @requires express
- * @requires aws-sdk
- * @requires @aws-sdk/client-bedrock-runtime
+ * @requires @aws-sdk/client-gameliftstreams
  */
 
 const crypto = require('crypto');
@@ -32,13 +31,12 @@ const serverless = require('serverless-http');
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
-const { GameLiftStreams } = require('@aws-sdk/client-gameliftstreams');
+const { GameLiftStreamsClient, StartStreamSessionCommand, GetStreamSessionCommand, CreateStreamSessionConnectionCommand, TerminateStreamSessionCommand } = require('@aws-sdk/client-gameliftstreams');
 const config = require('./config');
 
 // Initialize GameLiftStreams client
-const gameliftstreams = new GameLiftStreams({
-  endpoint: config.GAMELIFT_STREAMS_ENDPOINT || null,
-  region: config.GAMELIFT_STREAMS_REGION || null
+const gameliftstreams = new GameLiftStreamsClient({
+    region:  config.GAMELIFT_STREAMS_REGION || 'us-west-2'
 });
 
 /**
@@ -438,7 +436,7 @@ app.get('/', (req, res) => {
  */
 app.get('/:filename', (req, res, next) => {
   const filename = req.params.filename;
-  const allowedFiles = ['gameliftstreams-1.0.0.js', 'touchtomouse.js', 'utils.js', 'pretty.css', 'loadingscreen.js'];
+  const allowedFiles = ['gameliftstreams-1.1.0.js', 'touchtomouse.js', 'utils.js', 'pretty.css', 'loadingscreen.js'];
   
   if (allowedFiles.includes(filename)) {
     const filePath = path.join(__dirname, 'public', filename);
@@ -478,7 +476,7 @@ app.get('/:filename', (req, res, next) => {
  * Generates a unique connection token that expires after 24 hours.
  * The token can be used to retrieve the WebRTC signal response.
  */
-app.post('/api/CreateStreamSession', function (req, res) {
+app.post('/api/CreateStreamSession', async function (req, res) {
     console.log(`CreateStreamSession request received: ${JSON.stringify(req.body)}`);
 
     // Ideally your backend server will validate all of these configuration parameters,
@@ -518,23 +516,23 @@ app.post('/api/CreateStreamSession', function (req, res) {
         Locations: req.body.locations,
     };
 
-    gameliftstreams.startStreamSession(requestData, (err, data) => {
-        if (err) {
-            console.error('CreateStreamSession error:', err);
-            res.status(config.GENERAL_ERROR_STATUS_CODE);
-            res.json({ error: err.message });
-        } else {
-            console.log(`CreateStreamSession success: Arn=${JSON.stringify(data.Arn)}`);
-            const connectionId = crypto.randomUUID();
-            connectionDatabase[connectionId] = {
-                StreamGroupId: streamGroupId, // Store the resolved streamGroupId
-                StreamSessionArn: data.Arn,
-                Timestamp: Date.now()
-            };
-            res.json({ Token: connectionId });
-            setTimeout(() => { delete connectionDatabase[connectionId]; }, 24*60*60*1000);
-        }
-    });
+    try {
+        const command = new StartStreamSessionCommand(requestData);
+        const data = await gameliftstreams.send(command);
+        console.log(`CreateStreamSession success: Arn=${JSON.stringify(data.Arn)}`);
+        const connectionId = crypto.randomUUID();
+        connectionDatabase[connectionId] = {
+            StreamGroupId: streamGroupId, // Store the resolved streamGroupId
+            StreamSessionArn: data.Arn,
+            Timestamp: Date.now()
+        };
+        res.json({ Token: connectionId });
+        setTimeout(() => { delete connectionDatabase[connectionId]; }, 24*60*60*1000);
+    } catch (err) {
+        console.error('CreateStreamSession error:', err);
+        res.status(config.GENERAL_ERROR_STATUS_CODE);
+        res.json({ error: err.message });
+    }
 });
 
 /**
@@ -602,7 +600,8 @@ app.post('/api/GetSignalResponse', async (req, res) => {
       // Get stream session data
       let streamSessionData;
       try {
-          streamSessionData = await gameliftstreams.getStreamSession(requestData);
+          const command = new GetStreamSessionCommand(requestData);
+          streamSessionData = await gameliftstreams.send(command);
       } catch (error) {
           logger.error('GetStreamSession API call failed', {
               correlationId,
@@ -698,7 +697,7 @@ app.post('/api/GetSignalResponse', async (req, res) => {
  * @throws {Error} 404 - When connection token is not recognized
  * @throws {Error} General error status - For stream session connection failures
  */
-app.post('/api/ReconnectStreamSession', function (req, res) {
+app.post('/api/ReconnectStreamSession', async function (req, res) {
     console.log(`ReconnectStreamSession request received: ${JSON.stringify(req.body)}`);
 
     // For simplicity, we treat knowledge of a valid connection token as authorization.
@@ -724,18 +723,18 @@ app.post('/api/ReconnectStreamSession', function (req, res) {
         SignalRequest: req.body.SignalRequest,
     };
 
-    gameliftstreams.createStreamSessionConnection(requestData, (err, data) => {
-        if (err) {
-            console.log(`ReconnectStreamSession -> CreateStreamSessionConnection ERROR: ${err}`);
-            res.status(generalErrorStatusCode);
-            res.json({});
-        } else {
-            console.log(`ReconnectStreamSession -> CreateStreamSessionConnection SUCCESS: Arn=${JSON.stringify(req.body.StreamSessionId)}`);
-            console.debug(data);
-            // Return the new signal response for the client to complete reconnection
-            res.json({ SignalResponse: data.SignalResponse });
-        }
-    });
+    try {
+        const command = new CreateStreamSessionConnectionCommand(requestData);
+        const data = await gameliftstreams.send(command);
+        console.log(`ReconnectStreamSession -> CreateStreamSessionConnection SUCCESS: Arn=${JSON.stringify(req.body.StreamSessionId)}`);
+        console.debug(data);
+        // Return the new signal response for the client to complete reconnection
+        res.json({ SignalResponse: data.SignalResponse });
+    } catch (err) {
+        console.log(`ReconnectStreamSession -> CreateStreamSessionConnection ERROR: ${err}`);
+        res.status(generalErrorStatusCode);
+        res.json({});
+    }
 });
 
 /**
@@ -777,7 +776,7 @@ app.post('/api/ReconnectStreamSession', function (req, res) {
  * @see CreateStreamSession - For token creation
  * @see GetSignalResponse - For stream status checking
  */
-app.post('/api/DestroyStreamSession', function (req, res) {
+app.post('/api/DestroyStreamSession', async function (req, res) {
     console.log(`DestroyStreamSession request received: ${JSON.stringify(req.body)}`);
 
     // For simplicity, we treat knowledge of a valid connection token as authorization.
@@ -800,20 +799,21 @@ app.post('/api/DestroyStreamSession', function (req, res) {
         Identifier: connectionData.StreamGroupId,
         StreamSessionIdentifier: connectionData.StreamSessionArn,
     };
-    gameliftstreams.terminateStreamSession(requestData, (err, data) => {
-        if (err) {
-            console.log(`DestroyStreamSession -> TerminateStreamSession ERROR: ${err}`);
-            res.status(generalErrorStatusCode);
-            res.json({});
-        } else {
-            console.log(`DestroyStreamSession -> TerminateStreamSession SUCCESS: Arn=${JSON.stringify(connectionData.StreamSessionArn)}`);
-            res.json({});
+    
+    try {
+        const command = new TerminateStreamSessionCommand(requestData);
+        await gameliftstreams.send(command);
+        console.log(`DestroyStreamSession -> TerminateStreamSession SUCCESS: Arn=${JSON.stringify(connectionData.StreamSessionArn)}`);
+        res.json({});
 
-            // Purge the connection token immediately; clients can't make other
-            // requests now that the stream has moved to TERMINATING status.
-            delete connectionDatabase[req.body.Token];
-        }
-    });
+        // Purge the connection token immediately; clients can't make other
+        // requests now that the stream has moved to TERMINATING status.
+        delete connectionDatabase[req.body.Token];
+    } catch (err) {
+        console.log(`DestroyStreamSession -> TerminateStreamSession ERROR: ${err}`);
+        res.status(generalErrorStatusCode);
+        res.json({});
+    }
 });
 
 /**

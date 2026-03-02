@@ -1,11 +1,11 @@
 {
   "name": "gameliftstreams-share-url",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "private": true,
   "description": "Example full-stack Amazon GameLift Streams application with web page and backend",
   "main": "server.js",
   "dependencies": {
-    "@aws-sdk/client-gameliftstreams": "^3.272.0",
+    "@aws-sdk/client-gameliftstreams": "^3.955.0",
     "chart.js": "^4.4.6",
     "cors": "^2.8.5",
     "express": "^4.21.0",

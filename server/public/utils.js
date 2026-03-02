@@ -51,23 +51,13 @@ function deleteCookie(name) {
 
 /**
  * Restores an element's value from a cookie if it exists
- * @param {string} cookieName - Name of cookie to restore from
- * @param {string} elementId - ID of element to restore value to
+ * @param {string} cookieName - Cookie name to retrieve
+ * @param {string} elementId - Element ID to update
  */
 function restoreFromCookieIfSet(cookieName, elementId) {
-    try {
-        const value = getCookie(cookieName);
-        if (value) {
-            const element = document.getElementById(elementId);
-            if (element) {
-                // Sanitize the cookie value before using it
-                element.value = sanitizeInput(value);
-            }
-        }
-    } catch (error) {
-        console.error(`Error restoring cookie ${cookieName}:`, error);
-        // Delete potentially corrupted cookie
-        deleteCookie(cookieName);
+    const x = getCookieIfSet(name);
+    if (x) {
+        document.getElementById(id).value = x;
     }
 }
 
@@ -169,18 +159,6 @@ function getCookieIfSet(name) {
 }
 
 /**
- * Restores an element's value from a cookie if it exists
- * @param {string} id - Element ID to update
- * @param {string} name - Cookie name to retrieve
- */
-function restoreFromCookieIfSet(id, name) {
-    const x = getCookieIfSet(name);
-    if (x) {
-        document.getElementById(id).value = x;
-    }
-}
-
-/**
  * Gets API Gateway URL from current URL
  * @returns {string} API Gateway URL
  */
@@ -231,9 +209,12 @@ function appValidateSetup(isLocal) {
             return 'Invalid Stream Group ID - check the GameLiftStreams console for valid Stream Group IDs';
         }
         try {
-            JSON.parse(getValue('setupLocations') || '[]').forEach(checkString);
+            const locations = JSON.parse(getValue('setupLocations') || '[]');
+            console.log('locations: ', locations)
+            const locationsArray = Array.isArray(locations) ? locations : [locations];
+            locationsArray.forEach(checkString);
         } catch {
-            return 'Invalid JSON list for Locations - example: ["us-east-2", "ap-northeast-1"]';
+            return 'Invalid JSON list for Locations - example: "us-west-2" or ["us-east-2", "ap-northeast-1"]';
         }
         if (getValue('setupApplicationId') !== "" && !getValue('setupApplicationId').match(/^(arn:.+[/])?a-[a-zA-Z0-9]{4,}$/)) {
             return 'Invalid Application ID - check the GameLiftStreams console for valid Application IDs';
@@ -253,12 +234,19 @@ function appValidateSetup(isLocal) {
     document.getElementById('setupValidationError').innerHTML = err;
 
     // For convenience, remember current settings as cookies for future page reloads
-    setCookie('savedApplicationId', getValue('setupApplicationId'));
-    setCookie('savedStreamGroupId', getValue('setupStreamGroupId'));
-    setCookie('savedLocations', getValue('setupLocations'));
-    setCookie('savedUserId', getValue('setupUserId'));
-    setCookie('savedArgs', getValue('setupArgs'));
-    setCookie('savedEnv', getValue('setupEnv'));
+    const appId = getValue('setupApplicationId');
+    const sgId = getValue('setupStreamGroupId');
+    const locations = getValue('setupLocations');
+    const userId = getValue('setupUserId');
+    const args = getValue('setupArgs');
+    const envVars = getValue('setupEnv');
+    
+    if (appId) setCookie('savedApplicationId', appId);
+    if (sgId) setCookie('savedStreamGroupId', sgId);
+    if (locations) setCookie('savedLocations', locations);
+    if (userId) setCookie('savedUserId', userId);
+    if (args) setCookie('savedArgs', args);
+    if (envVars) setCookie('savedEnv', envVars);
 
     return err.length == 0;
 }
@@ -511,8 +499,8 @@ function getBrowserInfo() {
 function sanitizeInput(input) {
     if (!input) return '';
     
-    // Remove any characters that aren't letters or numbers
-    const sanitized = input.replace(/[^a-zA-Z0-9]/g, '');
+    // Remove any characters that aren't letters or numbers, hyphens or used for json dict or array
+    const sanitized = input.replace(/[^a-zA-Z0-9\-{}\[\]_":,]/g, '');
     
     // Optional: Limit the length to prevent extremely long inputs
     return sanitized.slice(0, 50); // Adjust max length as needed

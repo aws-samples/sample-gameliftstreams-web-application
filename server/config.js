@@ -91,10 +91,11 @@ module.exports = {
   /**
    * Optional endpoint override for Amazon GameLift Streams API
    * This may change based on your AWS setup and region
-   * @type {string}
+   * Set to null to use the default AWS endpoint for the region
+   * @type {string|null}
    */
 
-  GAMELIFT_STREAMS_ENDPOINT: '',
+  GAMELIFT_STREAMS_ENDPOINT: null,
 
   /**
    * Security Configuration
