@@ -1,9 +1,19 @@
-## Sample Web Application for Amazon GameLift Streams
+# Warning
+<div style="background-color: #f0a0a0; border: 1px solid #d00; padding: 10px; border-radius: 5px;">
+PROJECT STATUS: END OF LIFE. This project is no longer maintained or supported. No further updates, bug fixes, or security patches will be provided.
+</div> 
 
-An easy-to-deploy web application example for Amazon GameLift Streams that enables browser-based game streaming with sharable URLs.
+Last Updated: March 2026
+
+Alternatives: Please use [sample-amazon-gamelift-streams-react-app](https://github.com/aws-samples/sample-amazon-gamelift-streams-react-app) instead.
+
+## Overivew
+
+A legacy example of a Amazon GameLift Streams client that supports browser-based game streaming with sharable URLs. We strongly recommend using [sample-amazon-gamelift-streams-react-app](https://github.com/aws-samples/sample-amazon-gamelift-streams-react-app) instead.
 
 **⚠️ IMPORTANT NOTICE**
-This code is example code for testing and evaluation purposes only and should not be used in a production capacity. For guidance on creating production client applications, including proper testing and evaluation procedures, refer to the section on the [web client](https://docs.aws.amazon.com/gameliftstreams/latest/developerguide/sdk.html) in the _Amazon GameLift Streams Developer Guide_.
+
+This code is legacy example code for testing and evaluation purposes only and should not be used in a production capacity. For guidance on creating production client applications, including proper testing and evaluation procedures, refer to the section on the [web client](https://docs.aws.amazon.com/gameliftstreams/latest/developerguide/sdk.html) in the _Amazon GameLift Streams Developer Guide_.
 
 ### Step 1: Check prerequisites
 
